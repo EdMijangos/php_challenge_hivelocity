@@ -1,38 +1,38 @@
 <?php
 
 class FinalResult {
-    function results($f) {
-        $d = fopen($f, "r");
-        $h = fgetcsv($d);
-        $rcs = [];
-        while(!feof($d)) {
-            $r = fgetcsv($d);
-            if(count($r) == 16) {
-                $amt = !$r[8] || $r[8] == "0" ? 0 : (float) $r[8];
-                $ban = !$r[6] ? "Bank account number missing" : (int) $r[6];
-                $bac = !$r[2] ? "Bank branch code missing" : $r[2];
-                $e2e = !$r[10] && !$r[11] ? "End to end id missing" : $r[10] . $r[11];
-                $rcd = [
+    function results($file) {
+        $doc = fopen($file, "r");
+        $headers = fgetcsv($doc);
+        $records = [];
+        while(!feof($doc)) {
+            $row = fgetcsv($doc);
+            if(count($row) == 16) {
+                $amount = !$row[8] || $row[8] == "0" ? 0 : (float) $row[8];
+                $bank_acc = !$row[6] ? "Bank account number missing" : (int) $row[6];
+                $bank_code = !$row[2] ? "Bank branch code missing" : $row[2];
+                $e2e_id = !$row[10] && !$row[11] ? "End to end id missing" : $row[10] . $row[11];
+                $new_record = [
                     "amount" => [
-                        "currency" => $h[0],
-                        "subunits" => (int) ($amt * 100)
+                        "currency" => $headers[0],
+                        "subunits" => (int) ($amount * 100)
                     ],
-                    "bank_account_name" => str_replace(" ", "_", strtolower($r[7])),
-                    "bank_account_number" => $ban,
-                    "bank_branch_code" => $bac,
-                    "bank_code" => $r[0],
-                    "end_to_end_id" => $e2e,
+                    "bank_account_name" => str_replace(" ", "_", strtolower($row[7])),
+                    "bank_account_number" => $bank_acc,
+                    "bank_branch_code" => $bank_code,
+                    "bank_code" => $row[0],
+                    "end_to_end_id" => $e2e_id,
                 ];
-                $rcs[] = $rcd;
+                $records[] = $new_record;
             }
         }
-        $rcs = array_filter($rcs);
+        $records = array_filter($records);
         return [
-            "filename" => basename($f),
-            "document" => $d,
-            "failure_code" => $h[1],
-            "failure_message" => $h[2],
-            "records" => $rcs
+            "filename" => basename($file),
+            "document" => $doc,
+            "failure_code" => $headers[1],
+            "failure_message" => $headers[2],
+            "records" => $records
         ];
     }
 }
