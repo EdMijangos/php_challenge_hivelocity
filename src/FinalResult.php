@@ -1,41 +1,24 @@
 <?php
 
 class FinalResult {
+    // Constants
+    const ROW_ITEMS = 16;
+    const AMOUNT = 8;
+    const BANK_ACC = 6;
+    const BRANCH_CODE = 2;
+    const ID_START = 10;
+    const ID_END = 11;
+    const ACC_NAME = 7;
+    const BANK_CODE = 0;
+
     function results($file) {
         $doc = fopen($file, "r");
         $headers = fgetcsv($doc);
         $records = [];
 
-        // Constants
-        define("ROW_ITEMS", 16);
-        define("AMOUNT", 8);
-        define("BANK_ACC", 6);
-        define("BRANCH_CODE", 2);
-        define("ID_START", 10);
-        define("ID_END", 11);
-        define("ACC_NAME", 7);
-        define("BANK_CODE", 0);
-
         while(!feof($doc)) {
             $row = fgetcsv($doc);
-            if(count($row) == ROW_ITEMS) {
-                $amount = !$row[AMOUNT] || $row[AMOUNT] == "0" ? 0 : (float) $row[AMOUNT];
-                $bank_acc = !$row[BANK_ACC] ? "Bank account number missing" : (int) $row[BANK_ACC];
-                $branch_code = !$row[BRANCH_CODE] ? "Bank branch code missing" : $row[BRANCH_CODE];
-                $e2e_id = !$row[ID_START] && !$row[ID_END] ? "End to end id missing" : $row[ID_START] . $row[ID_END];
-                $new_record = [
-                    "amount" => [
-                        "currency" => $headers[0],
-                        "subunits" => (int) ($amount * 100)
-                    ],
-                    "bank_account_name" => str_replace(" ", "_", strtolower($row[ACC_NAME])),
-                    "bank_account_number" => $bank_acc,
-                    "bank_branch_code" => $branch_code,
-                    "bank_code" => $row[BANK_CODE],
-                    "end_to_end_id" => $e2e_id,
-                ];
-                $records[] = $new_record;
-            }
+            $records[] = $this->make_record($row, $headers[0]);
         }
         $records = array_filter($records);
         return [
@@ -45,6 +28,28 @@ class FinalResult {
             "failure_message" => $headers[2],
             "records" => $records
         ];
+    }
+
+    function make_record($row, $currency) {
+        if(count($row) == self::ROW_ITEMS) {
+            $amount = !$row[self::AMOUNT] || $row[self::AMOUNT] == "0" ? 0 : (float) $row[self::AMOUNT];
+            $bank_acc = !$row[self::BANK_ACC] ? "Bank account number missing" : (int) $row[self::BANK_ACC];
+            $branch_code = !$row[self::BRANCH_CODE] ? "Bank branch code missing" : $row[self::BRANCH_CODE];
+            $e2e_id = !$row[self::ID_START] && !$row[self::ID_END] ? 
+                "End to end id missing" : $row[self::ID_START] . $row[self::ID_END];
+            $new_record = [
+                "amount" => [
+                    "currency" => $currency,
+                    "subunits" => (int) ($amount * 100)
+                ],
+                "bank_account_name" => str_replace(" ", "_", strtolower($row[self::ACC_NAME])),
+                "bank_account_number" => $bank_acc,
+                "bank_branch_code" => $branch_code,
+                "bank_code" => $row[self::BANK_CODE],
+                "end_to_end_id" => $e2e_id,
+            ];
+            return $new_record;
+        }
     }
 }
 
